@@ -2,18 +2,20 @@
 """
 Meeting Transcript Manager
 Converts speaker-separated audio segments to text with interactive speaker assignment
+Uses OpenAI Whisper-large-v3 via HuggingFace Transformers for best quality
 """
 
 import json
 import logging
 import os
 import re
+import torch
 from datetime import datetime
 from pathlib import Path
 from typing import Dict, List, Tuple, Optional
 
-import whisper
 import pandas as pd
+from transformers import AutoModelForSpeechSeq2Seq, AutoProcessor, pipeline
 
 # Configure logging
 logging.basicConfig(
@@ -29,31 +31,70 @@ AUDIO_OUTPUT_DIR = Path("audio out")
 class TranscriptManager:
     """Manages transcription and speaker assignment for meeting audio"""
     
-    def __init__(self, whisper_model: str = "large"):
+    def __init__(self, whisper_model: str = "openai/whisper-large-v3"):
         """
         Initialize transcript manager
         
         Args:
-            whisper_model: Whisper model size (tiny, base, small, medium, large)
+            whisper_model: Whisper model ID (default: openai/whisper-large-v3)
         """
         self.whisper_model_name = whisper_model
-        self.whisper_model = None
+        self.whisper_pipeline = None
+        self.device = None
+        self.torch_dtype = None
         self.transcripts = {}
         self.speaker_mappings = {}
         
+    def _setup_device_and_dtype(self):
+        """Setup optimal device and data type for current hardware"""
+        if torch.cuda.is_available():
+            self.device = "cuda"
+            self.torch_dtype = torch.float16
+            logger.info("🚀 Using CUDA GPU acceleration")
+        elif hasattr(torch.backends, 'mps') and torch.backends.mps.is_available():
+            self.device = "mps"
+            self.torch_dtype = torch.float16
+            logger.info("🚀 Using Apple Silicon MPS acceleration")
+        else:
+            self.device = "cpu"
+            self.torch_dtype = torch.float32
+            logger.info("💻 Using CPU (no GPU acceleration available)")
+        
     def load_whisper_model(self) -> bool:
-        """Load Whisper model for transcription"""
+        """Load Whisper-large-v3 model via HuggingFace Transformers"""
         try:
-            logger.info(f"🔄 Loading Whisper model: {self.whisper_model_name}")
-            model_sizes = {"tiny": "17MB", "base": "140MB", "small": "460MB", "medium": "1.4GB", "large": "3GB"}
-            size = model_sizes.get(self.whisper_model_name, "unknown")
-            logger.info(f"📥 First time: Downloading model (~{size})")
-            logger.info(f"⏳ This may take 2-20 minutes depending on model size and internet connection...")
-            logger.info(f"🚀 Note: 'large' model provides the BEST German transcription quality available!")
+            self._setup_device_and_dtype()
             
-            self.whisper_model = whisper.load_model(self.whisper_model_name)
-            logger.info(f"✅ Model loaded successfully")
+            logger.info(f"🔄 Loading Whisper model: {self.whisper_model_name}")
+            logger.info(f"📥 Model size: ~3GB (Whisper-large-v3 with 10-20% better accuracy)")
+            logger.info(f"⏳ First time: Downloading model may take 5-15 minutes...")
+            logger.info(f"🎯 Note: This is the LATEST and BEST Whisper model for German transcription!")
+            
+            # Load model and processor
+            model = AutoModelForSpeechSeq2Seq.from_pretrained(
+                self.whisper_model_name,
+                torch_dtype=self.torch_dtype,
+                low_cpu_mem_usage=True,
+                use_safetensors=True
+            )
+            model.to(self.device)
+            
+            processor = AutoProcessor.from_pretrained(self.whisper_model_name)
+            
+            # Create pipeline with optimized settings
+            self.whisper_pipeline = pipeline(
+                "automatic-speech-recognition",
+                model=model,
+                tokenizer=processor.tokenizer,
+                feature_extractor=processor.feature_extractor,
+                torch_dtype=self.torch_dtype,
+                device=self.device,
+                return_timestamps=True
+            )
+            
+            logger.info(f"✅ Whisper-large-v3 loaded successfully on {self.device}")
             return True
+            
         except Exception as e:
             logger.error(f"❌ Failed to load Whisper model: {e}")
             return False
@@ -73,8 +114,8 @@ class TranscriptManager:
         return sessions
     
     def transcribe_session(self, session_path: Path) -> Dict:
-        """Transcribe all segments in a session"""
-        if not self.whisper_model:
+        """Transcribe all segments in a session using Whisper-large-v3"""
+        if not self.whisper_pipeline:
             if not self.load_whisper_model():
                 return {}
         
@@ -92,11 +133,25 @@ class TranscriptManager:
         transcripts = {}
         segment_files = sorted(segments_dir.glob("*.wav"))
         
-        logger.info(f"🎤 Transcribing {len(segment_files)} segments...")
-        logger.info(f"⏳ Estimated time: {len(segment_files) * 5}-{len(segment_files) * 15} seconds (with 'tiny' model)")
+        logger.info(f"🎤 Transcribing {len(segment_files)} segments with Whisper-large-v3...")
+        logger.info(f"⏳ Estimated time: {len(segment_files) * 3}-{len(segment_files) * 8} seconds (GPU-accelerated)")
         
         import time
         start_time = time.time()
+        
+        # Prepare generation kwargs for best quality
+        generate_kwargs = {
+            "language": "german",
+            "task": "transcribe",
+            "return_timestamps": True,
+            "max_new_tokens": 448,
+            "num_beams": 1,
+            "condition_on_prev_tokens": False,
+            "compression_ratio_threshold": 1.35,
+            "temperature": (0.0, 0.2, 0.4, 0.6, 0.8, 1.0),
+            "logprob_threshold": -1.0,
+            "no_speech_threshold": 0.6
+        }
         
         for i, segment_file in enumerate(segment_files, 1):
             elapsed = time.time() - start_time
@@ -121,8 +176,12 @@ class TranscriptManager:
                 base_name, speaker_id, segment_num, start_time, end_time = match.groups()
                 start_time, end_time = float(start_time), float(end_time)
                 
-                # Transcribe segment
-                result = self.whisper_model.transcribe(str(segment_file))
+                # Transcribe segment with Whisper-large-v3
+                result = self.whisper_pipeline(
+                    str(segment_file),
+                    generate_kwargs=generate_kwargs
+                )
+                
                 text = result["text"].strip()
                 
                 if text:  # Only keep non-empty transcriptions
@@ -132,8 +191,9 @@ class TranscriptManager:
                         'end_time': end_time,
                         'duration': end_time - start_time,
                         'text': text,
-                        'confidence': result.get('confidence', 0.0),
-                        'language': result.get('language', 'unknown')
+                        'confidence': 1.0,  # Transformers doesn't provide confidence scores
+                        'language': 'german',
+                        'model': 'whisper-large-v3'
                     }
                     logger.debug(f"✅ {speaker_id}: {text[:50]}...")
                 else:
@@ -142,7 +202,7 @@ class TranscriptManager:
             except Exception as e:
                 logger.error(f"❌ Failed to transcribe {segment_file.name}: {e}")
         
-        logger.info(f"✅ Transcribed {len(transcripts)}/{len(segment_files)} segments")
+        logger.info(f"✅ Transcribed {len(transcripts)}/{len(segment_files)} segments with Whisper-large-v3")
         return transcripts
     
     def save_raw_transcripts(self, transcripts: Dict, session_path: Path, session_name: str) -> Path:
@@ -157,6 +217,7 @@ class TranscriptManager:
             'total_segments': len(transcripts),
             'speakers_detected': list(set(t['speaker_id'] for t in transcripts.values())),
             'status': 'awaiting_speaker_assignment',
+            'model_used': 'whisper-large-v3',
             'transcripts': transcripts
         }
         
@@ -185,6 +246,7 @@ class TranscriptManager:
             'total_segments': len(sorted_transcripts),
             'speakers': list(speaker_mappings.values()),
             'speaker_mappings': speaker_mappings,
+            'model_used': 'whisper-large-v3',
             'transcript': []
         }
         
@@ -205,107 +267,103 @@ class TranscriptManager:
     
     def save_transcript(self, transcript: Dict, output_file: Path):
         """Save transcript in multiple formats"""
-        base_path = output_file.parent / output_file.stem
+        if not transcript or not transcript.get('transcript'):
+            logger.warning("⚠️ No transcript data to save")
+            return
         
-        # 1. Save as JSON (complete data)
-        json_file = base_path.with_suffix('.json')
+        # JSON format (structured data)
+        json_file = output_file.with_suffix('.json')
         with open(json_file, 'w', encoding='utf-8') as f:
             json.dump(transcript, f, indent=2, ensure_ascii=False)
         logger.info(f"💾 Saved JSON transcript: {json_file}")
         
-        # 2. Save as readable text format
-        txt_file = base_path.with_suffix('.txt')
+        # TXT format (human readable)
+        txt_file = output_file.with_suffix('.txt')
         with open(txt_file, 'w', encoding='utf-8') as f:
             f.write(f"Meeting Transcript: {transcript['session_name']}\n")
             f.write(f"Generated: {transcript['generated_at']}\n")
+            f.write(f"Model: {transcript.get('model_used', 'whisper-large-v3')}\n")
             f.write(f"Speakers: {', '.join(transcript['speakers'])}\n")
-            f.write("=" * 80 + "\n\n")
+            f.write("=" * 50 + "\n\n")
             
             for entry in transcript['transcript']:
-                f.write(f"[{entry['timestamp_formatted']}] {entry['speaker']}: {entry['text']}\n\n")
+                f.write(f"[{entry['timestamp_formatted']}] {entry['speaker']}: {entry['text']}\n")
+        logger.info(f"📝 Saved TXT transcript: {txt_file}")
         
-        logger.info(f"📄 Saved text transcript: {txt_file}")
-        
-        # 3. Save as CSV for analysis
-        csv_file = base_path.with_suffix('.csv')
+        # CSV format (for analysis)
+        csv_file = output_file.with_suffix('.csv')
         transcript_df = pd.DataFrame(transcript['transcript'])
         transcript_df.to_csv(csv_file, index=False, encoding='utf-8')
         logger.info(f"📊 Saved CSV transcript: {csv_file}")
-        
-        return {
-            'json': json_file,
-            'txt': txt_file,
-            'csv': csv_file
-        }
     
     def process_session_transcription_only(self, session_path: Path) -> Optional[Path]:
-        """Transcription-only processing (speaker assignment done separately)"""
-        logger.info(f"🎬 Transcribing session: {session_path.name}")
+        """Process session for transcription only (no interactive assignment)"""
+        session_name = session_path.name
+        logger.info(f"🎤 Processing session for transcription: {session_name}")
         
         # Transcribe all segments
         transcripts = self.transcribe_session(session_path)
+        
         if not transcripts:
-            logger.error("❌ No transcripts generated")
+            logger.error(f"❌ No transcripts generated for {session_name}")
             return None
         
-        # Save raw transcripts for later speaker assignment
-        raw_transcript_file = self.save_raw_transcripts(transcripts, session_path, session_path.name)
+        # Save raw transcripts for later assignment
+        raw_transcript_file = self.save_raw_transcripts(transcripts, session_path, session_name)
         
-        logger.info(f"✅ Transcription complete! Raw transcripts saved.")
-        logger.info(f"🌅 Next: Use 'python speaker_assignment.py' for interactive speaker assignment")
+        logger.info(f"✅ Session transcription completed: {session_name}")
+        logger.info(f"📂 Raw transcripts saved: {raw_transcript_file}")
+        logger.info(f"🌅 Next step: Run 'python speaker_assignment.py' for interactive speaker naming")
         
         return raw_transcript_file
 
 
 def main():
-    """Main entry point"""
-    print("🎤 Meeting Transcript Manager")
-    print("=" * 50)
+    """Main function for command line usage"""
+    import sys
     
-    # Initialize manager
-    manager = TranscriptManager()
+    transcript_manager = TranscriptManager()
+    sessions = transcript_manager.find_processed_sessions()
     
-    # Find available sessions
-    sessions = manager.find_processed_sessions()
     if not sessions:
-        print("📭 No processed audio sessions found.")
-        print("💡 Run speaker_diarization.py first to process audio files.")
+        logger.info("📭 No processed sessions found")
+        logger.info("💡 Run speaker diarization first: python speaker_diarization.py")
         return
     
     # Show available sessions
-    print(f"\n📁 Available Sessions:")
+    logger.info("📋 Available sessions:")
     for i, session in enumerate(sessions, 1):
-        print(f"  {i}. {session.name}")
+        logger.info(f"  {i}. {session.name}")
     
     # Session selection
-    while True:
+    if len(sessions) == 1:
+        selected_session = sessions[0]
+        logger.info(f"🎯 Auto-selected: {selected_session.name}")
+    else:
         try:
-            choice = input(f"\n🎯 Select session to transcribe (1-{len(sessions)}, 'all' for all sessions): ").strip().lower()
+            choice = input("\nSelect session number (or 'q' to quit): ").strip()
+            if choice.lower() == 'q':
+                return
             
-            if choice == 'all':
-                selected_sessions = sessions
-                break
+            session_idx = int(choice) - 1
+            if 0 <= session_idx < len(sessions):
+                selected_session = sessions[session_idx]
             else:
-                session_num = int(choice)
-                if 1 <= session_num <= len(sessions):
-                    selected_sessions = [sessions[session_num - 1]]
-                    break
-                else:
-                    print(f"❌ Please enter a number between 1 and {len(sessions)}")
-        except ValueError:
-            print("❌ Please enter a valid number or 'all'")
+                logger.error("❌ Invalid session number")
+                return
+        except (ValueError, KeyboardInterrupt):
+            logger.info("👋 Goodbye!")
+            return
     
-    # Process selected sessions
-    for session in selected_sessions:
-        try:
-            manager.process_session_transcription_only(session)
-        except KeyboardInterrupt:
-            print("\n\n⏹️ Processing interrupted by user")
-            break
-        except Exception as e:
-            logger.error(f"❌ Failed to process {session.name}: {e}")
+    # Process selected session
+    result = transcript_manager.process_session_transcription_only(selected_session)
     
-    print("\n🎉 Transcript processing complete!")
+    if result:
+        logger.info("🎉 Transcription completed successfully!")
+        logger.info("🌅 Run 'python speaker_assignment.py' next for interactive speaker assignment")
+    else:
+        logger.error("❌ Transcription failed")
+        sys.exit(1)
 
 
 if __name__ == "__main__":

@@ -19,7 +19,7 @@ einops==0.8.1
 filelock==3.18.0
 fonttools==4.58.4
 frozenlist==1.7.0
-fsspec==2025.5.1
+fsspec>=2022.5.0
 hf-xet==1.1.5
 huggingface-hub==0.33.2
 HyperPyYAML==1.2.2
@@ -99,6 +99,8 @@ typing_extensions==4.14.0
 tzdata==2025.2
 urllib3==2.5.0
 yarl==1.20.1
-openai-whisper>=20231117
+transformers>=4.40.0
+datasets[audio]>=2.19.0
+accelerate>=0.30.0
 pygame>=2.5.0
 moviepy>=1.0.3
