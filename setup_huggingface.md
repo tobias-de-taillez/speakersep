@@ -12,6 +12,7 @@ Das Speaker Diarization Script benötigt Zugang zu den pyannote.audio Modellen a
 ### 2. Access Token generieren  
 - Besuche https://huggingface.co/settings/tokens
 - Erstelle einen neuen Token mit "Read" Berechtigung
+- **WICHTIG**: Aktiviere "Access to public gated repositories" ✅
 - **Token sicher aufbewahren!**
 
 ### 3. Model User Conditions akzeptieren
@@ -71,6 +72,13 @@ print('✅ Setup erfolgreich!')
 ### "Access denied" Error
 - Akzeptiere die Model-Bedingungen erneut
 - Warte 5-10 Minuten nach der Akzeptierung
+
+### "403 Forbidden" oder "gated repositories" Error
+- **Häufigster Fehler!** Token braucht spezielle Berechtigung
+- Gehe zu https://huggingface.co/settings/tokens
+- Klicke auf deinen Token → Scroll zu "Permissions"
+- Aktiviere "Access to public gated repositories" ✅
+- Speichere die Änderungen
 
 ## Nächste Schritte
 Nach erfolgreichem Setup:
