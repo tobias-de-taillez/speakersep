@@ -123,6 +123,38 @@ Alle Änderungen folgen dem 3-Phasen-Protokoll:
     - **Master-Processor**: Batch-Processing mit detailliertem Logging und Fehler-Recovery
   - **Status**: ABGESCHLOSSEN
 
+- [ENHANCEMENT] MP4 Video Support - Audio Extraction
+  - **Ziel/Problem**: MP4-Dateien (Video + Audio) sollen verarbeitet werden, aber nur Audio extrahiert
+  - **Hypothese/Plan**:
+    1. **Audio-Extraktion**: moviepy oder ffmpeg-python für MP4 → WAV/MP3 Konvertierung
+    2. **File-Extension Update**: .mp4 zu unterstützten Formaten hinzufügen
+    3. **Temp-File Management**: Extrahierte Audio-Dateien temporär speichern
+    4. **Pipeline-Integration**: Nahtlose Integration in bestehende Workflows
+  - **Betroffene Dateien**: master_processor.py, speaker_diarization.py, requirements.txt
+  - **Erwartetes Ergebnis**: 
+    - MP4-Videos werden automatisch erkannt und Audio extrahiert
+    - Bestehende Audio-Pipeline funktioniert unverändert
+    - Keine Beeinträchtigung der Performance
+  - **Durchgeführte Änderungen**:
+    1. ✅ `moviepy>=1.0.3` zu requirements.txt hinzugefügt
+    2. ✅ `.mp4` zu SUPPORTED_FORMATS in speaker_diarization.py hinzugefügt  
+    3. ✅ `.mp4` zu audio_extensions in master_processor.py hinzugefügt
+    4. ✅ `extract_audio_from_video()` Methode implementiert
+    5. ✅ `process_audio_file()` für MP4-Handling erweitert
+    6. ✅ Temporary file cleanup implementiert
+  - **Tatsächliches Ergebnis**:
+    - ✅ MP4-Dateien werden automatisch erkannt
+    - ✅ Audio wird temporär extrahiert (WAV-Format)
+    - ✅ Bestehende Pipeline funktioniert unverändert
+    - ✅ Cleanup verhindert Speicher-Verschwendung
+    - ✅ Robuste Fehlerbehandlung für korrupte Videos
+  - **Erkenntnisse/Learnings**:
+    - **moviepy Integration**: Einfache und robuste Lösung für Video-Audio-Extraktion
+    - **Temporary Files**: Wichtig für sauberes Memory-Management bei großen Videos
+    - **Format-Erweiterung**: Minimal-invasive Änderung ohne Breaking Changes
+    - **Error Handling**: MP4 ohne Audio-Track wird graceful abgefangen
+  - **Status**: ABGESCHLOSSEN
+
 ## Technische Spezifikation
 
 ### Kern-Framework: pyannote.audio
@@ -195,9 +227,14 @@ Raw Transcripts → Interactive Assignment → Final Transcript
 - **`test_installation.py`** - Installation-Tests
 
 ### Konfiguration  
-- **`requirements.txt`** - Python Dependencies (inkl. pygame für Audio)
+- **`requirements.txt`** - Python Dependencies (inkl. pygame für Audio, moviepy für MP4)
 - **`.env`** - HuggingFace Token (HUGGINGFACE_TOKEN)
 - **`setup_huggingface.md`** - HuggingFace Setup-Anleitung
+
+### Unterstützte Dateiformate
+- **Audio:** WAV, MP3, FLAC, M4A, AAC, OGG, WEBM
+- **Video:** MP4 (Audio wird automatisch extrahiert)
+- **Ausgabe:** JSON, TXT, CSV, RTTM
 
 ## Entwicklungsrichtlinien
 - Code und Comments in Englisch
@@ -209,11 +246,11 @@ Raw Transcripts → Interactive Assignment → Final Transcript
 
 ### 🌙 Overnight Processing
 ```bash
-# Alle Audio-Files in "audio in/" verarbeiten
+# Alle Audio-Files in "audio in/" verarbeiten  
 python master_processor.py
 ```
 **Was passiert:**
-- Vollautomatisches Batch-Processing aller Audio-Files
+- Vollautomatisches Batch-Processing aller Audio-Files (inkl. MP4-Videos)
 - Speaker Diarization (pyannote.audio)
 - Speech-to-Text Transcription (OpenAI Whisper "large")
 - Raw Transcripts gespeichert als JSON mit Status "awaiting_speaker_assignment"

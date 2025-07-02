@@ -101,3 +101,4 @@ urllib3==2.5.0
 yarl==1.20.1
 openai-whisper>=20231117
 pygame>=2.5.0
+moviepy>=1.0.3

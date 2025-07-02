@@ -86,7 +86,7 @@ class MasterProcessor:
             logger.warning(f"📭 Input directory not found: {AUDIO_INPUT_DIR}")
             return []
             
-        audio_extensions = {'.wav', '.mp3', '.flac', '.m4a', '.aac', '.ogg'}
+        audio_extensions = {'.wav', '.mp3', '.flac', '.m4a', '.aac', '.ogg', '.mp4'}
         audio_files = []
         
         for ext in audio_extensions:

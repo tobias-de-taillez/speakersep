@@ -25,6 +25,7 @@ from pathlib import Path
 from datetime import datetime
 import json
 import csv
+import tempfile
 from typing import List, Dict, Any, Optional
 
 # Load environment variables from .env file
@@ -45,11 +46,19 @@ except ImportError as e:
     print("Install with: pip install pyannote.audio librosa soundfile")
     sys.exit(1)
 
+# Video processing for MP4 audio extraction
+try:
+    import moviepy.editor
+    MOVIEPY_AVAILABLE = True
+except ImportError:
+    MOVIEPY_AVAILABLE = False
+    # Logger is not yet configured, will warn later
+
 # Configuration
 AUDIO_INPUT_DIR = Path("audio in")
 AUDIO_OUTPUT_DIR = Path("audio out") 
 AUDIO_PROCESSED_DIR = Path("audio_processed")
-SUPPORTED_FORMATS = {'.wav', '.mp3', '.flac', '.m4a', '.aac', '.ogg', '.webm'}
+SUPPORTED_FORMATS = {'.wav', '.mp3', '.flac', '.m4a', '.aac', '.ogg', '.webm', '.mp4'}
 
 # Setup logging
 logging.basicConfig(
@@ -128,6 +137,48 @@ class SpeakerDiarizationProcessor:
         logger.info(f"📁 Found {len(audio_files)} audio files to process")
         return sorted(audio_files)
     
+    def extract_audio_from_video(self, video_file: Path) -> Optional[Path]:
+        """Extract audio from MP4 video file"""
+        if not MOVIEPY_AVAILABLE:
+            logger.error("❌ moviepy not available. Cannot extract audio from MP4.")
+            logger.error("Install with: pip install moviepy")
+            return None
+            
+        if video_file.suffix.lower() != '.mp4':
+            return video_file  # Not a video file, return as-is
+            
+        try:
+            logger.info(f"🎬 Extracting audio from MP4: {video_file.name}")
+            
+            # Create temporary audio file
+            temp_audio = tempfile.NamedTemporaryFile(suffix='.wav', delete=False)
+            temp_audio_path = Path(temp_audio.name)
+            temp_audio.close()
+            
+            # Extract audio using moviepy
+            from moviepy.editor import VideoFileClip
+            video_clip = VideoFileClip(str(video_file))
+            audio_clip = video_clip.audio
+            
+            if audio_clip is None:
+                logger.error(f"❌ No audio track found in {video_file.name}")
+                video_clip.close()
+                return None
+                
+            # Write audio to temporary file
+            audio_clip.write_audiofile(str(temp_audio_path), verbose=False, logger=None)
+            
+            # Cleanup
+            audio_clip.close()
+            video_clip.close()
+            
+            logger.info(f"✅ Audio extracted to temporary file: {temp_audio_path.name}")
+            return temp_audio_path
+            
+        except Exception as e:
+            logger.error(f"❌ Failed to extract audio from {video_file.name}: {e}")
+            return None
+    
     def create_output_structure(self, audio_file: Path) -> Path:
         """Create output directory structure for audio file"""
         # Use filename without extension as folder name
@@ -145,19 +196,29 @@ class SpeakerDiarizationProcessor:
         """Process single audio file with speaker diarization"""
         logger.info(f"🎵 Processing: {audio_file.name}")
         
+        temp_audio_file = None
         try:
-            # Create output structure
+            # Handle MP4 video files by extracting audio
+            if audio_file.suffix.lower() == '.mp4':
+                audio_file_for_processing = self.extract_audio_from_video(audio_file)
+                if audio_file_for_processing is None:
+                    return False
+                temp_audio_file = audio_file_for_processing
+            else:
+                audio_file_for_processing = audio_file
+            
+            # Create output structure (using original filename)
             output_folder = self.create_output_structure(audio_file)
             
             # Apply speaker diarization
             logger.info("🧠 Applying speaker diarization...")
-            diarization = self.pipeline(str(audio_file))
+            diarization = self.pipeline(str(audio_file_for_processing))
             
             # Save results in multiple formats and get meaningful segments
             meaningful_segments = self._save_diarization_results(diarization, audio_file, output_folder)
             
             # Extract speaker segments (only meaningful ones)
-            self._extract_speaker_segments(audio_file, diarization, output_folder, meaningful_segments)
+            self._extract_speaker_segments(audio_file_for_processing, diarization, output_folder, meaningful_segments)
             
             # Generate summary
             self._generate_summary(diarization, audio_file, output_folder)
@@ -168,6 +229,14 @@ class SpeakerDiarizationProcessor:
         except Exception as e:
             logger.error(f"❌ Failed to process {audio_file.name}: {e}")
             return False
+        finally:
+            # Cleanup temporary audio file if created
+            if temp_audio_file and temp_audio_file != audio_file:
+                try:
+                    temp_audio_file.unlink()
+                    logger.debug(f"🗑️ Cleaned up temporary file: {temp_audio_file.name}")
+                except Exception as e:
+                    logger.warning(f"⚠️ Failed to cleanup temporary file: {e}")
     
     def _save_diarization_results(self, diarization: Annotation, audio_file: Path, output_folder: Path) -> List[tuple]:
         """Save diarization results in multiple formats"""
