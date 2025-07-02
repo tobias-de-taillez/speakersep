@@ -35,6 +35,8 @@ class SpeakerAssignmentTool:
     
     def __init__(self):
         """Initialize speaker assignment tool"""
+        global AUDIO_AVAILABLE
+        
         self.sessions = []
         self.current_session = None
         self.current_transcripts = {}
@@ -47,7 +49,6 @@ class SpeakerAssignmentTool:
                 logger.info("🔊 Audio playback enabled")
             except Exception as e:
                 logger.warning(f"⚠️ Failed to initialize audio: {e}")
-                global AUDIO_AVAILABLE
                 AUDIO_AVAILABLE = False
         
     def find_sessions_awaiting_assignment(self) -> List[Path]:
