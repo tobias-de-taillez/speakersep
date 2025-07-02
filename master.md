@@ -34,6 +34,8 @@ Alle Änderungen folgen dem 3-Phasen-Protokoll:
   - Batch processing mit MPS/CUDA GPU acceleration support
   - Comprehensive logging und error handling
   - Audio workflow: "audio in/" → processing → "audio_out/" (results) → "audio_processed/" (archive)
+  - setup_huggingface.md - Complete setup guide für HuggingFace integration
+  - librosa + soundfile dependencies für Audio segment extraction
 
 ### IN BEARBEITUNG
 - [TEST] HuggingFace setup und erste Test-Läufe mit echten Audio-Files
