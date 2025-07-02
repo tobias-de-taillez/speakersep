@@ -84,6 +84,10 @@ audio in/*
 audio out/*
 !audio out/.gitkeep
 
+# Processing directories and logs
+audio_processed/
+*.log
+
 # Audio files (for testing)
 *.wav
 *.mp3
