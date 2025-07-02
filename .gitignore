@@ -88,6 +88,9 @@ audio out/*
 audio_processed/
 *.log
 
+# Environment variables
+.env
+
 # Audio files (for testing)
 *.wav
 *.mp3

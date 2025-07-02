@@ -27,6 +27,13 @@ import json
 import csv
 from typing import List, Dict, Any, Optional
 
+# Load environment variables from .env file
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except ImportError:
+    pass  # dotenv not available, continue with system env vars
+
 try:
     import torch
     from pyannote.audio import Pipeline
