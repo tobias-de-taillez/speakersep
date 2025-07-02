@@ -153,11 +153,11 @@ class SpeakerDiarizationProcessor:
             logger.info("🧠 Applying speaker diarization...")
             diarization = self.pipeline(str(audio_file))
             
-            # Save results in multiple formats
-            self._save_diarization_results(diarization, audio_file, output_folder)
+            # Save results in multiple formats and get meaningful segments
+            meaningful_segments = self._save_diarization_results(diarization, audio_file, output_folder)
             
-            # Extract speaker segments
-            self._extract_speaker_segments(audio_file, diarization, output_folder)
+            # Extract speaker segments (only meaningful ones)
+            self._extract_speaker_segments(audio_file, diarization, output_folder, meaningful_segments)
             
             # Generate summary
             self._generate_summary(diarization, audio_file, output_folder)
@@ -169,7 +169,7 @@ class SpeakerDiarizationProcessor:
             logger.error(f"❌ Failed to process {audio_file.name}: {e}")
             return False
     
-    def _save_diarization_results(self, diarization: Annotation, audio_file: Path, output_folder: Path):
+    def _save_diarization_results(self, diarization: Annotation, audio_file: Path, output_folder: Path) -> List[tuple]:
         """Save diarization results in multiple formats"""
         base_name = audio_file.stem
         
@@ -178,13 +178,33 @@ class SpeakerDiarizationProcessor:
         with open(rttm_file, 'w') as f:
             diarization.write_rttm(f)
         
+        # Filter meaningful segments (≥1s) for all processing
+        meaningful_segments = []
+        all_segments = list(diarization.itertracks(yield_label=True))
+        
+        for item in all_segments:
+            if len(item) == 3:
+                turn, _, speaker = item
+            elif len(item) == 2:
+                turn, speaker = item
+            else:
+                logger.warning(f"Unexpected diarization format: {item}")
+                continue
+                
+            if turn.duration >= 1.0:
+                meaningful_segments.append((turn, speaker))
+            else:
+                logger.debug(f"Filtered short segment: {turn.duration:.2f}s ({speaker})")
+        
+        logger.info(f"📊 Kept {len(meaningful_segments)} segments ≥1s (filtered {len(all_segments) - len(meaningful_segments)} short segments)")
+        
         # 2. Save as CSV for easy analysis
         csv_file = output_folder / "metadata" / f"{base_name}_timeline.csv"
         with open(csv_file, 'w', newline='') as f:
             writer = csv.writer(f)
             writer.writerow(['start_time', 'end_time', 'duration', 'speaker'])
             
-            for turn, _, speaker in diarization.itertracks(yield_label=True):
+            for turn, speaker in meaningful_segments:
                 writer.writerow([
                     f"{turn.start:.2f}",
                     f"{turn.end:.2f}", 
@@ -192,27 +212,32 @@ class SpeakerDiarizationProcessor:
                     speaker
                 ])
         
-        # 3. Save as JSON for programmatic access
+        # 3. Save as JSON for programmatic access (only meaningful segments)
         json_file = output_folder / "metadata" / f"{base_name}_diarization.json"
         timeline_data = []
-        for turn, _, speaker in diarization.itertracks(yield_label=True):
+        total_duration = 0
+        
+        for turn, speaker in meaningful_segments:
             timeline_data.append({
                 'start': turn.start,
                 'end': turn.end,
                 'duration': turn.duration,
                 'speaker': speaker
             })
+            total_duration = max(total_duration, turn.end)
         
         with open(json_file, 'w') as f:
             json.dump({
                 'audio_file': audio_file.name,
                 'processed_at': datetime.now().isoformat(),
                 'num_speakers': len(diarization.labels()),  
-                'total_duration': max(turn.end for turn, _, _ in diarization.itertracks()),
+                'total_duration': total_duration,
                 'timeline': timeline_data
             }, f, indent=2)
+        
+        return meaningful_segments
     
-    def _extract_speaker_segments(self, audio_file: Path, diarization: Annotation, output_folder: Path):
+    def _extract_speaker_segments(self, audio_file: Path, diarization: Annotation, output_folder: Path, meaningful_segments: List[tuple]):
         """Extract individual speaker segments as separate audio files"""
         try:
             # Load original audio
@@ -221,8 +246,8 @@ class SpeakerDiarizationProcessor:
             segments_folder = output_folder / "segments"
             base_name = audio_file.stem
             
-            # Extract each speaker segment
-            for i, (turn, _, speaker) in enumerate(diarization.itertracks(yield_label=True)):
+            # Extract each meaningful speaker segment (≥1s only)
+            for i, (turn, speaker) in enumerate(meaningful_segments):
                 start_sample = int(turn.start * sr)
                 end_sample = int(turn.end * sr)
                 
@@ -235,7 +260,7 @@ class SpeakerDiarizationProcessor:
                 
                 sf.write(str(segment_path), segment_audio, sr)
             
-            logger.info(f"🎯 Extracted {len(list(diarization.itertracks()))} speaker segments")
+            logger.info(f"🎯 Extracted {len(meaningful_segments)} speaker segments")
             
         except Exception as e:
             logger.warning(f"⚠️ Failed to extract segments: {e}")
@@ -243,12 +268,28 @@ class SpeakerDiarizationProcessor:
     def _generate_summary(self, diarization: Annotation, audio_file: Path, output_folder: Path):
         """Generate processing summary and statistics"""
         speakers = list(diarization.labels())
-        total_duration = max(turn.end for turn, _, _ in diarization.itertracks()) if diarization else 0
+        # Calculate total duration safely
+        total_duration = 0
+        if diarization:
+            for item in diarization.itertracks(yield_label=True):
+                if len(item) >= 2:
+                    turn = item[0]  # First element is always the segment
+                    total_duration = max(total_duration, turn.end)
         
         # Calculate speaker statistics
         speaker_stats = {}
         for speaker in speakers:
-            speaker_segments = [turn for turn, _, spk in diarization.itertracks(yield_label=True) if spk == speaker]
+            speaker_segments = []
+            for item in diarization.itertracks(yield_label=True):
+                if len(item) == 3:
+                    turn, _, spk = item
+                elif len(item) == 2:
+                    turn, spk = item
+                else:
+                    continue
+                if spk == speaker:
+                    speaker_segments.append(turn)
+            
             total_speech_time = sum(turn.duration for turn in speaker_segments)
             speaker_stats[speaker] = {
                 'segments': len(speaker_segments),

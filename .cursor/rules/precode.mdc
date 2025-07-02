@@ -1,0 +1,29 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+⚠️ MANDATORY PRE‑IMPLEMENTATION CHECKLIST:
+
+STOP! Before writing ANY code:
+
+1. 🔍 SEARCH FIRST:
+   grep_search for functionality
+   file_search for similar files
+   list_dir in relevant directories
+
+2. 📝 DOCUMENT FINDINGS:
+   ## Existing Files Found:
+   - …
+   ## Existing Functionality:
+   - …
+   ## Gaps Identified:
+   - …
+   ## Proposed Approach:
+   - [ ] Enhance existing code
+   - [ ] Create new files (needs justification)
+   - [ ] Refactor existing code
+
+3. ✋ WAIT FOR APPROVAL:
+   - Present findings to user
+   - Get explicit approval before proceeding

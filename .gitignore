@@ -103,5 +103,13 @@ audio_processed/
 *.pkl
 *.bin
 
+# Whisper Models (can be 3GB+ for large models)
+.cache/
+whisper_models/
+*.pt
+*.model
+
 # Logs
-*.log 
+*.log
+overnight_processing.log
+overnight_processing_summary.txt 

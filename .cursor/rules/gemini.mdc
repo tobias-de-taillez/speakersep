@@ -1,0 +1,7 @@
+---
+description: whenever an LLM interaction with google/gemini is requested
+globs: 
+alwaysApply: false
+---
+the correct model name for every gemini call is:
+"gemini-2.5-flash"

@@ -1,0 +1,39 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+KERN-DIREKTIVE:
+master.md ist die einzige Quelle der Wahrheit (Single Source of Truth) und das strategische Gehirn dieses Projekts. Jede Interaktion des KI-Agenten (Cursor) muss diesem dreistufigen Protokoll folgen: 1. Analysieren & Planen, 2. Ausführen & Dokumentieren, 3. Reflektieren & Aktualisieren.
+
+PHASE 1: ANALYSIEREN & PLANEN (Vor jeder Code-Änderung)
+
+Vollständigen Kontext laden: Lies und verinnerliche das gesamte master.md-Dokument. Konzentriere dich dabei besonders auf:
+
+Die übergeordneten Projekt-Ziele.
+Die "Offenen Punkte" und deren Prioritäten.
+Die "Leitprinzipien & Best Practices" des Projekts.
+Die Erkenntnisse (Learnings) aus den letzten 5 Changelog-Einträgen, um wiederholte Fehler oder verworfene Ansätze zu vermeiden.
+Aktionsplan formulieren: Erstelle am Ende von master.md einen temporären neuen Changelog-Eintrag mit dem Status "IN BEARBEITUNG". Fülle darin die folgenden Felder aus:
+
+Ziel/Problem: Was ist die exakte Aufgabe oder das zu lösende Problem?
+Hypothese/Plan: Welche konkreten Schritte und Code-Änderungen schlägst du vor, um das Ziel zu erreichen? Welche Dateien werden betroffen sein?
+Erwartetes Ergebnis: Was ist das Erfolgskriterium für diese Änderung? (z.B. "Ein Test wird grün", "Die Performance verbessert sich um X%", "Ein Bug tritt nicht mehr auf").
+PHASE 2: AUSFÜHREN & DOKUMENTIEREN (Während der Code-Änderung)
+
+Plan umsetzen: Führe die im Plan beschriebenen Code-Änderungen durch.
+
+Änderungen protokollieren: Aktualisiere den Changelog-Eintrag im Feld "Durchgeführte Änderungen" mit einer prägnanten Liste der Modifikationen (z.B. "Funktion X in Y.py refaktorisiert", "Neue Dependency Z hinzugefügt").
+
+PHASE 3: REFLEKTIEREN & AKTUALISIEREN (Nach der Code-Änderung)
+
+Ergebnis validieren: Überprüfe das Ergebnis anhand des in Phase 1 definierten Erfolgskriteriums.
+
+Changelog finalisieren: Vervollständige den Eintrag:
+
+Tatsächliches Ergebnis: Beschreibe das Ergebnis. War die Hypothese korrekt?
+Erkenntnisse/Learnings: Dies ist das wichtigste Feld! Was wurde gelernt? Gab es unerwartete Seiteneffekte? Wurde eine bessere Methode entdeckt? Diese Erkenntnis ist ab sofort Teil des Projektwissens.
+Status: Ändere den Status auf "ABGESCHLOSSEN" oder "FEHLGESCHLAGEN".
+Gesamtdokument synchronisieren: Aktualisiere die übergeordneten Sektionen in master.md (z.B. "Aktueller Status", "Offene Punkte", "Architektur"), damit sie den neuen Zustand des Projekts widerspiegeln. Lösche den Punkt von der "Offene Punkte"-Liste, falls er erledigt wurde.
+
+Neue Sektion hinzufügen (optional, aber empfohlen): Füge eine Sektion "Leitprinzipien & Best Practices" am Anfang des Dokuments ein. Hier kann das LLM selbst oder du Regeln festhalten, die sich aus den "Learnings" ergeben (z.B. "XLSX-Dateien immer auf 1x1 Seite skalieren", "Alle neuen Funktionen benötigen einen Docstring").
