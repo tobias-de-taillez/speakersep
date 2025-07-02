@@ -19,8 +19,15 @@ Alle Änderungen folgen dem 3-Phasen-Protokoll:
   - GitHub Repository erstellt: https://github.com/tobias-de-taillez/speakersep
   - Code erfolgreich auf GitHub gepusht
 
+- [SETUP] Development Environment Setup
+  - Python 3.12 virtual environment erstellt (Python 3.13 inkompatibel mit sentencepiece)
+  - pyannote.audio 3.3.2 erfolgreich installiert mit allen Dependencies
+  - Test-Skript erstellt und validiert - alle Core-Features funktional
+  - MPS (Apple Silicon) GPU-Support verfügbar
+  - Basis für Speaker Diarization Pipeline etabliert
+
 ### IN BEARBEITUNG
-- [NEXT] Speaker separation library Architektur-Design
+- [ARCH] Speaker separation library Architektur-Definition und Implementierung
 
 ## Technische Spezifikation
 
