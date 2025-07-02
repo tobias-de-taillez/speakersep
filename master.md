@@ -11,8 +11,16 @@ Alle Änderungen folgen dem 3-Phasen-Protokoll:
 
 ## Changelog
 
-### IN BEARBEITUNG
+### Abgeschlossen
 - [INIT] Repository-Initialisierung und Grundstruktur
+  - master.md mit KERN-DIREKTIVE Protokoll erstellt
+  - Git repository initialisiert 
+  - Initial commit erstellt
+  - GitHub Repository erstellt: https://github.com/tobias-de-taillez/speakersep
+  - Code erfolgreich auf GitHub gepusht
+
+### IN BEARBEITUNG
+- [NEXT] Speaker separation library Architektur-Design
 
 ## Technische Spezifikation
 
