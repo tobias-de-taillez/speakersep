@@ -25,6 +25,7 @@ Alle Änderungen folgen dem 3-Phasen-Protokoll:
   - Test-Skript erstellt und validiert - alle Core-Features funktional
   - MPS (Apple Silicon) GPU-Support verfügbar
   - Basis für Speaker Diarization Pipeline etabliert
+  - Audio Input/Output Ordner struktur erstellt (git-ignore konfiguriert)
 
 ### IN BEARBEITUNG
 - [ARCH] Speaker separation library Architektur-Definition und Implementierung

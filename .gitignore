@@ -78,6 +78,12 @@ poetry.lock
 ehthumbs.db
 Thumbs.db
 
+# Audio directories (but keep structure)
+audio in/*
+!audio in/.gitkeep
+audio out/*
+!audio out/.gitkeep
+
 # Audio files (for testing)
 *.wav
 *.mp3
