@@ -144,7 +144,7 @@ class TranscriptManager:
             "language": "german",
             "task": "transcribe",
             "return_timestamps": True,
-            "max_new_tokens": 448,
+            "max_new_tokens": 400,  # Reduced from 448 to stay under token limit
             "num_beams": 1,
             "condition_on_prev_tokens": False,
             "compression_ratio_threshold": 1.35,
