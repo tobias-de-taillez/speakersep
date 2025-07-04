@@ -22,12 +22,13 @@ Entwicklung einer Library zur automatischen Zerlegung von Meeting-Transkript-Aud
 
 ## 📊 **Aktueller Fine-Tuning Dataset Status**
 ✅ **Bereit für pyannote.audio Fine-Tuning** 
-- 🎯 **17 verschiedene Sprecher** mit echten Namen identifiziert
-- 📁 **2.758 Audio-Segmente** sauber organisiert  
-- ⏱️ **4.0 Stunden** hochwertiges Trainingsmaterial verfügbar
+- 🎯 **10 bereinigte Sprecher** für Fine-Tuning optimiert
+- 📁 **2.711 High-Quality Audio-Segmente** sauber organisiert  
+- ⏱️ **4.0 Stunden** Premium-Trainingsmaterial verfügbar
 - 📈 **Session-übergreifend konsistent**: Sprecher mit echten Namen über 4 Sessions
 - 🗂️ **Optimal strukturiert** in `audio out/speakers/[Real_Name]/`
-- 👥 **Hauptsprecher**: Elisabeth (742 Seg.), Tobias (584 Seg.), Raphael (458 Seg.), Alex (223 Seg.)
+- 👥 **Hauptsprecher**: Elisabeth (742 Seg.), Tobias (584 Seg.), Raphael (458 Seg.), Alex (227 Seg.)
+- 🗂️ **Low-Quality ausgeschlossen**: 6 Kategorien in `Rest/` (nicht für Fine-Tuning)
 
 ## KERN-DIREKTIVE Protokoll
 Alle Änderungen folgen dem 3-Phasen-Protokoll:
@@ -53,6 +54,24 @@ Alle Änderungen folgen dem 3-Phasen-Protokoll:
     - ✅ Git commit & push der Korrekturen
   - **Tatsächliches Ergebnis**: Elisabeth von 647→742 Segmente (+95), 17 statt 18 Sprecher (sauberer), 2.758 Segmente total
   - **Erkenntnisse/Learnings**: Speaker-Assignment Fehler können massive Datensatz-Verbesserungen bewirken. Elisabeth ist jetzt klar die Hauptsprecherin mit 742 Segmenten. Manual Review der Auto-Assignments ist essentiell für Datenqualität!
+
+- [DATA-QUALITY] Fine-Tuning Dataset Cleanup & Optimization ✅
+  - **Ziel/Problem**: Bereinigung des Fine-Tuning Datasets - Low-Quality Speaker und Duplikate entfernen, nur High-Quality Sprecher für Fine-Tuning verwenden
+  - **Hypothese/Plan**: 
+    1. **"Rest" Kategorie**: SPEAKER_XX, UNDEUTLICH, UNKLAR, Gemischt nach `Rest/` verschieben (nicht für Fine-Tuning)
+    2. **Alex/Alexander Merge**: Duplikat-Sprecher zusammenführen (dieselbe Person)
+    3. **Profile Regeneration**: Neue Speaker-Profile basierend auf bereinigten Daten
+  - **Betroffene Dateien**: Komplette speakers/ Verzeichnis-Struktur, alle Profile JSONs, speakers_summary.json
+  - **Erwartetes Ergebnis**: Sauberes Fine-Tuning Dataset mit nur High-Quality Sprechern, keine Low-Quality Kontamination
+  - **Status**: ABGESCHLOSSEN
+  - **Durchgeführte Änderungen**: 
+    - ✅ `Rest/` Ordner erstellt für Low-Quality Kategorien
+    - ✅ 6 Low-Quality Ordner nach `Rest/` verschoben: SPEAKER_02, SPEAKER_05, SPEAKER_07, UNDEUTLICH, UNKLAR, Gemischt
+    - ✅ Alex/Alexander Merge: Alle Alexander Segmente zu Alex verschoben
+    - ✅ Profile Regeneration Script erstellt und ausgeführt
+    - ✅ Neue speakers_summary.json mit bereinigten Daten generiert
+  - **Tatsächliches Ergebnis**: 10 saubere Sprecher (statt 17), 2.711 High-Quality Segmente (statt 2.758), 4.0h Premium-Trainingsmaterial, Alex 227 Segmente total
+  - **Erkenntnisse/Learnings**: Data Quality Cleanup ist essentiell für Fine-Tuning! Low-Quality Daten können Model-Performance verschlechtern. Manual Review und Bereinigung vor Fine-Tuning ist kritisch. 10 saubere Sprecher sind besser als 17 mit Noise-Kontamination!
 
 - [FINE-TUNING] Pyannote.audio Fine-Tuning für Unternehmens-Sprecher
   - **Ziel/Problem**: Verbesserung der Speaker Diarization Performance für wiederkehrende Unternehmens-Sprecher durch Fine-Tuning des pyannote.audio Segmentation Models
@@ -461,12 +480,13 @@ audio out/speakers/
 - **Framework**: HuggingFace Transformers + Datasets
 
 ### 💾 Aktuelle Datenlage (OPTIMAL)
-✅ **17 verschiedene Sprecher** mit echten Namen identifiziert  
-✅ **2.758 Audio-Segmente** sauber organisiert
-✅ **4.0 Stunden** hochwertiges Trainingsmaterial (4x mehr als empfohlen)
+✅ **10 bereinigte Sprecher** für Fine-Tuning optimiert
+✅ **2.711 High-Quality Audio-Segmente** sauber organisiert (Low-Quality ausgeschlossen)
+✅ **4.0 Stunden** Premium-Trainingsmaterial (4x mehr als empfohlen)
 ✅ **Session-übergreifend konsistent** - Echte Namen über 4 Sessions verfolgt
 ✅ **Strukturierte Organisation** in `audio out/speakers/[Real_Name]/`
-✅ **Hauptsprecher identifiziert** - Elisabeth (742 Seg.), Tobias (584 Seg.), Raphael (458 Seg.), Alex (223 Seg.)
+✅ **Hauptsprecher identifiziert** - Elisabeth (742 Seg.), Tobias (584 Seg.), Raphael (458 Seg.), Alex (227 Seg.)
+✅ **Data Quality Cleanup** - 6 Low-Quality Kategorien in `Rest/` ausgeschlossen (SPEAKER_XX, UNDEUTLICH, etc.)
 
 ### 📋 Implementierungsplan
 
