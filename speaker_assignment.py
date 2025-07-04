@@ -355,6 +355,29 @@ class SpeakerAssignmentTool:
         except Exception as e:
             logger.warning(f"⚠️ Failed to mark session as completed: {e}")
             
+    def _organize_speakers_for_fine_tuning(self):
+        """Organize speakers for fine-tuning after assignment completion"""
+        try:
+            logger.info("🗂️ Organizing speakers for fine-tuning...")
+            
+            # Import here to avoid circular imports
+            from speaker_organizer import SpeakerOrganizer
+            
+            organizer = SpeakerOrganizer()
+            success = organizer.organize_all_speakers()
+            
+            if success:
+                logger.info("✅ Speaker organization completed successfully!")
+                print("🗂️ Speaker samples organized for fine-tuning!")
+                print(f"📁 Check: audio out/speakers/")
+            else:
+                logger.warning("⚠️ Speaker organization failed - run speaker_organizer.py manually")
+                
+        except ImportError:
+            logger.warning("⚠️ speaker_organizer.py not found - skipping automatic organization")
+        except Exception as e:
+            logger.warning(f"⚠️ Failed to organize speakers: {e}")
+            
     def run_interactive_assignment(self):
         """Main interactive assignment workflow"""
         print("🎭 SPEAKER ASSIGNMENT TOOL")
@@ -413,6 +436,9 @@ class SpeakerAssignmentTool:
                 logger.error(f"❌ Failed to process {session.name}: {e}")
                 
         print("\n🎉 Speaker assignment complete!")
+        
+        # Automatically organize speakers for fine-tuning
+        self._organize_speakers_for_fine_tuning()
 
 
 def main():

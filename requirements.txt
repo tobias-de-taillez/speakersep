@@ -103,4 +103,4 @@ transformers>=4.40.0
 datasets[audio]>=2.19.0
 accelerate>=0.30.0
 pygame>=2.5.0
-moviepy>=1.0.3
+moviepy==1.0.3

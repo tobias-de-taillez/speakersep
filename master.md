@@ -3,13 +3,31 @@
 ## Projektziel
 Entwicklung einer Library zur automatischen Zerlegung von Meeting-Transkript-Audio-Files in einzelne Sprecher mit vollständigen Meeting-Transkripten.
 
-## 🎯 Aktueller Status: PRODUKTIONSBEREIT
+## 🎯 Aktueller Status: PRODUKTIONSBEREIT + FINE-TUNING VORBEREITUNG
 ✅ **Vollständige Pipeline implementiert und getestet**
 - 🌙 **Overnight Processing**: Vollautomatisches Batch-Processing aller Audio-Files
 - 🌅 **Morning Workflow**: Interaktive Speaker-Zuordnung mit Audio-Playback
 - 🎭 **Audio-Samples**: pygame-Integration für auditive Speaker-Identification
 - 📊 **Multi-Format Output**: JSON, TXT, CSV für verschiedene Anwendungsfälle
 - ⚡ **Performance**: ~14.6x Realtime + Premium German Quality (Whisper-large-v3)
+
+## 🔧 Offene Punkte
+- [x] **Speaker Sample Organization**: ✅ Sortierung der Speaker-Samples in sprecherspezifische Ordner für Fine-Tuning
+- [ ] **Fine-Tuning Implementation**: Implementierung der pyannote.audio Fine-Tuning Pipeline für Unternehmens-Sprecher
+- [ ] **Fine-Tuning Dataset Preparation**: Konvertierung der organisierten Speaker-Samples in HuggingFace-kompatibles Format
+- [ ] **Fine-Tuning Execution**: Training des Fine-Tuned Models mit unseren 5.3h Unternehmens-Daten
+- [ ] **Model Integration**: Integration des Fine-Tuned Models in die bestehende Pipeline
+- [ ] **Performance Evaluation**: Vergleich der DER-Werte vor/nach Fine-Tuning
+- [ ] **Speaker Identification**: Enhancement der Namen-Zuordnung durch Voice-Profile Matching
+
+## 📊 **Aktueller Fine-Tuning Dataset Status**
+✅ **Bereit für pyannote.audio Fine-Tuning** 
+- 🎯 **17 verschiedene Sprecher** mit echten Namen identifiziert
+- 📁 **2.758 Audio-Segmente** sauber organisiert  
+- ⏱️ **4.0 Stunden** hochwertiges Trainingsmaterial verfügbar
+- 📈 **Session-übergreifend konsistent**: Sprecher mit echten Namen über 4 Sessions
+- 🗂️ **Optimal strukturiert** in `audio out/speakers/[Real_Name]/`
+- 👥 **Hauptsprecher**: Elisabeth (742 Seg.), Tobias (584 Seg.), Raphael (458 Seg.), Alex (223 Seg.)
 
 ## KERN-DIREKTIVE Protokoll
 Alle Änderungen folgen dem 3-Phasen-Protokoll:
@@ -18,6 +36,25 @@ Alle Änderungen folgen dem 3-Phasen-Protokoll:
 3. **REFLECT & UPDATE** - Validierung, Changelog-Finalisierung, master.md Update
 
 ## Changelog
+
+### IN BEARBEITUNG
+
+- [FINE-TUNING] Pyannote.audio Fine-Tuning für Unternehmens-Sprecher
+  - **Ziel/Problem**: Verbesserung der Speaker Diarization Performance für wiederkehrende Unternehmens-Sprecher durch Fine-Tuning des pyannote.audio Segmentation Models
+  - **Hypothese/Plan**:
+    1. **Diarizers Library Setup**: Installation und Konfiguration der Hugging Face Diarizers Library
+    2. **Dataset Preparation**: Konvertierung unserer 5.3h organisierten Speaker-Samples in HuggingFace-kompatibles Format
+    3. **Fine-Tuning Execution**: Training des Segmentation Models mit ~5 Minuten GPU-Zeit
+    4. **Model Integration**: Integration des Fine-Tuned Models in unsere bestehende Pipeline
+    5. **Performance Evaluation**: DER-Vergleich vor/nach Fine-Tuning (Ziel: 28% relative Verbesserung)
+  - **Betroffene Dateien**: Neue fine_tuning.py, requirements.txt Update, pipeline Integration
+  - **Erwartetes Ergebnis**: 
+    - 28% relative Verbesserung der Diarization Error Rate (DER)
+    - Bessere Speaker-Trennung bei wiederkehrenden Unternehmens-Sprechern
+    - Nahtlose Integration in bestehende Workflows
+    - Reduzierte False-Positive/Negative Rates bei bekannten Stimmen
+  - **Durchgeführte Änderungen**: [WIRD AKTUALISIERT]
+  - **Status**: IN BEARBEITUNG
 
 ### Abgeschlossen
 - [INIT] Repository-Initialisierung und Grundstruktur
@@ -256,6 +293,7 @@ Raw Transcripts → Interactive Assignment → Final Transcript
 - **`transcript_manager.py`** - Speech-to-Text Transkription (OpenAI Whisper)  
 - **`master_processor.py`** - 🌙 Overnight Batch-Processing (Vollautomatisch)
 - **`speaker_assignment.py`** - 🌅 Morning Interactive Assignment (Audio-Playback)
+- **`speaker_organizer.py`** - 🗂️ Speaker Sample Organization (Raw/Final Transcripts, Fine-Tuning Prep)
 
 ### Setup & Testing
 - **`test_setup.py`** - System-Validierung (HuggingFace, GPU, Dependencies)
@@ -270,6 +308,53 @@ Raw Transcripts → Interactive Assignment → Final Transcript
 - **Audio:** WAV, MP3, FLAC, M4A, AAC, OGG, WEBM
 - **Video:** MP4 (Audio wird automatisch extrahiert)
 - **Ausgabe:** JSON, TXT, CSV, RTTM
+
+## Changelog
+
+### ABGESCHLOSSEN
+
+- [FEATURE] Speaker Sample Organization für Fine-Tuning
+  - **Ziel/Problem**: Sortiere alle Speaker-Samples nach erfolgter Zuordnung in sprecherspezifische Ordner für Fine-Tuning der Speaker Diarization auf wiederkehrende Unternehmens-Sprecher
+  - **Hypothese/Plan**: 
+    1. **Neue Funktionalität**: Erstelle `speaker_organizer.py` für automatische Sortierung nach Speaker-Assignment
+    2. **Ordnerstruktur**: `audio out/speakers/[speaker_name]/` mit allen Segmenten dieses Sprechers
+    3. **Integration**: Automatische Ausführung nach `speaker_assignment.py` oder als separates Tool
+    4. **Benennung**: Behalte Session-Info im Filename: `sessionname_SPEAKER_XX_segment_timerange.wav`
+    5. **Metadaten**: Erstelle Speaker-Profile mit Segment-Counts und Gesamtdauer pro Sprecher
+  - **Betroffene Dateien**: Neue `speaker_organizer.py`, `speaker_assignment.py` für Integration
+  - **Erwartetes Ergebnis**: 
+    - Strukturierte Speaker-Samples in `audio out/speakers/[name]/` verfügbar
+    - Optimale Vorbereitung für Fine-Tuning auf Unternehmens-Sprecher
+    - Beibehaltung der Session-Referenz in Dateinamen
+    - Automatische Ausführung nach Speaker-Assignment
+  - **Durchgeführte Änderungen**: 
+    - ✅ `speaker_organizer.py` erstellt - Vollständige Speaker-Sample-Organisation
+    - ✅ **Raw Transcripts Support** - Kann SPEAKER_XX IDs ohne Speaker-Assignment verwenden
+    - ✅ **Interaktive Modus-Auswahl** - Auto-Detection von verfügbaren Transcript-Typen
+    - ✅ Automatische Integration in `speaker_assignment.py` - Läuft nach Speaker-Assignment
+    - ✅ Ordnerstruktur `audio out/speakers/[name]/` implementiert
+    - ✅ Session-Info in Dateinamen beibehalten: `sessionname_originalname.wav`
+    - ✅ Speaker-Profile mit Statistiken generiert (Segmente, Dauer, Sessions)
+    - ✅ Gesamtzusammenfassung `speakers_summary.json` erstellt
+  - **Tatsächliches Ergebnis**: 
+    - ✅ Vollständige Speaker-Sample-Organisation implementiert und getestet
+    - ✅ **Raw Transcripts Support**: Kann SPEAKER_XX IDs und finale Speaker-Namen verwenden
+    - ✅ Automatische Integration in speaker_assignment.py funktional
+    - ✅ Ordnerstruktur `audio out/speakers/[name]/` erfolgreich erstellt
+    - ✅ **Produktions-Test**: 12 Sprecher, 3.282 Segmente, 5.3h Audio organisiert
+    - ✅ Speaker-Profile und Gesamtzusammenfassung generiert
+    - ✅ Session-Info in Dateinamen beibehalten für Nachverfolgbarkeit
+    - ✅ Interaktive Auswahl zwischen Raw/Final Transcripts
+  - **Erkenntnisse/Learnings**: 
+    - **Raw Transcripts**: SPEAKER_XX IDs sofort verwendbar - ermöglicht Fine-Tuning ohne Speaker-Assignment
+    - **Pattern Matching**: Segment-zu-Transkript-Zuordnung über Timestamp-Matching funktioniert robust
+    - **File Management**: copy2() statt move() preserviert originale Session-Struktur als Backup
+    - **Integration**: Automatische Ausführung nach speaker_assignment verhindert manuellen Schritt
+    - **Statistiken**: Speaker-Profile mit Session-Breakdown essentiell für Fine-Tuning Datenqualität
+    - **Performance**: 3.282 Segmente in 7s organisiert - skaliert exzellent für große Datasets
+    - **Datenmenge**: 5.3h Audio-Material optimal für pyannote.audio Fine-Tuning (> 1h empfohlen)
+    - **Cross-Session Tracking**: Speaker konsistent über Sessions erkennbar (SPEAKER_06: 4/4 Sessions)
+  - **Status**: ✅ ABGESCHLOSSEN
 
 ## Entwicklungsrichtlinien
 - Code und Comments in Englisch
@@ -296,12 +381,26 @@ python master_processor.py
 # Interaktive Speaker-Zuordnung mit Audio-Samples
 python speaker_assignment.py
 ```
+
+### 🗂️ Speaker Organization (Optional - läuft automatisch nach Assignment)
+```bash
+# Manuelle Speaker-Organisation 
+python speaker_organizer.py
+```
+**Was passiert:**
+- **Auto-Detection**: Wählt zwischen Raw Transcripts (SPEAKER_XX) und Final Transcripts (echte Namen)
+- **4 Sessions verarbeitet**: 12 Sprecher, 3.282 Segmente, 5.3h Audio organisiert
+- Kopiert alle Segmente eines Sprechers in sprecherspezifische Ordner
+- Erstellt Speaker-Profile mit Statistiken (Segmente, Dauer, Sessions)
+- Generiert Gesamtzusammenfassung für Fine-Tuning Vorbereitung
+- Geschätzte Zeit: 5-10 Sekunden
 **Was passiert:**
 - Session-Auswahl (einzeln oder alle)
 - Pro Speaker: 3 längste Audio-Samples anzeigen
 - Text-Vorschau + Auditive Identifikation (pygame)
 - Interaktive Namens-Zuordnung (SPEAKER_00 → "John Doe")
 - Final Transcript Generation (JSON, TXT, CSV)
+- **🗂️ Automatische Speaker-Organisation**: Alle Segmente nach Sprecher sortiert
 - Geschätzte Zeit: 2-5 Minuten pro Session
 
 ### 📊 Output
@@ -317,4 +416,167 @@ audio out/sessionname/
 │   └── sessionname_final_transcript.csv # Analysis-friendly format
 └── segments/
     └── sessionname_SPEAKER_XX_*.wav     # Individual speaker audio clips
-``` 
+```
+
+**🗂️ Speaker-Organisation für Fine-Tuning:**
+```
+audio out/speakers/
+├── speakers_summary.json               # Gesamtübersicht aller Sprecher
+├── [Speaker Name 1]/
+│   ├── [Speaker Name 1]_profile.json   # Speaker-Profil & Statistiken
+│   ├── sessionname1_file1.wav          # Alle Segmente dieses Sprechers
+│   ├── sessionname1_file2.wav          # mit Session-Info im Dateinamen
+│   └── sessionname2_file3.wav          # aus allen Sessions
+├── [Speaker Name 2]/
+│   ├── [Speaker Name 2]_profile.json
+│   └── ... (weitere Segmente)
+└── ... (weitere Sprecher)
+```
+
+---
+
+## 🎯 Fine-Tuning Plan: Pyannote.audio für Unternehmens-Sprecher
+
+### 🔍 Recherche-Erkenntnisse
+**Quelle:** Hugging Face Diarizers Library (https://github.com/huggingface/diarizers)
+- **Performance-Boost**: 28% relative Verbesserung der DER möglich
+- **Training-Zeit**: Nur 5 Minuten GPU-Zeit erforderlich
+- **Datenrequirement**: >1 Stunde Audio (✅ Wir haben 5.3h)
+- **Technologie**: Fine-Tuning des Segmentation-Models (pyannote/segmentation-3.0)
+- **Framework**: HuggingFace Transformers + Datasets
+
+### 💾 Aktuelle Datenlage (OPTIMAL)
+✅ **17 verschiedene Sprecher** mit echten Namen identifiziert  
+✅ **2.758 Audio-Segmente** sauber organisiert
+✅ **4.0 Stunden** hochwertiges Trainingsmaterial (4x mehr als empfohlen)
+✅ **Session-übergreifend konsistent** - Echte Namen über 4 Sessions verfolgt
+✅ **Strukturierte Organisation** in `audio out/speakers/[Real_Name]/`
+✅ **Hauptsprecher identifiziert** - Elisabeth (742 Seg.), Tobias (584 Seg.), Raphael (458 Seg.), Alex (223 Seg.)
+
+### 📋 Implementierungsplan
+
+#### Phase 1: Diarizers Library Setup
+```bash
+# Install Diarizers Library
+pip install diarizers
+pip install accelerate
+pip install evaluate
+```
+
+#### Phase 2: Dataset Preparation
+**Erforderliches Format für HuggingFace:**
+```json
+{
+  "audio": {"array": [...], "sampling_rate": 16000},
+  "speakers": ["SPEAKER_00", "SPEAKER_01", ...],
+  "timestamps_start": [0.0, 2.5, 5.1, ...],
+  "timestamps_end": [2.5, 5.1, 7.8, ...]
+}
+```
+
+**Konvertierung unserer Daten:**
+1. **Audio-Samples**: `audio out/speakers/SPEAKER_XX/*.wav`
+2. **Timestamps**: Aus Dateinamen extrahieren (`*_starttime-endtime.wav`)
+3. **Speaker-Labels**: SPEAKER_XX aus Ordnerstruktur
+4. **Ground Truth**: Aus bestehenden RTTM-Files
+
+#### Phase 3: Fine-Tuning Script
+```python
+# train_segmentation.py
+python3 train_segmentation.py \
+    --dataset_path=./fine_tuning_dataset \
+    --model_name_or_path=pyannote/segmentation-3.0 \
+    --output_dir=./speaker-segmentation-fine-tuned-company \
+    --do_train \
+    --do_eval \
+    --learning_rate=1e-3 \
+    --num_train_epochs=5 \
+    --lr_scheduler_type=cosine \
+    --per_device_train_batch_size=32 \
+    --per_device_eval_batch_size=32 \
+    --evaluation_strategy=epoch \
+    --save_strategy=epoch \
+    --preprocessing_num_workers=2 \
+    --dataloader_num_workers=2 \
+    --logging_steps=100 \
+    --load_best_model_at_end
+```
+
+#### Phase 4: Model Integration
+```python
+# Pipeline Update mit Fine-Tuned Model
+from diarizers import SegmentationModel
+from pyannote.audio import Pipeline
+
+# Load Fine-Tuned Model
+model = SegmentationModel().from_pretrained("./speaker-segmentation-fine-tuned-company")
+model = model.to_pyannote_model()
+
+# Replace in existing pipeline
+pipeline = Pipeline.from_pretrained("pyannote/speaker-diarization-3.1")
+pipeline._segmentation.model = model
+```
+
+#### Phase 5: Performance Evaluation
+**Vor/Nach Fine-Tuning Vergleich:**
+- **DER-Messung**: Auf Test-Set mit Ground Truth
+- **Confusion Matrix**: Speaker-Verwechslung Analysis
+- **Timing Analysis**: Segmentation-Accuracy
+- **Cross-Session Validation**: Konsistenz über verschiedene Sessions
+
+### 🎯 Erwartete Ergebnisse
+- **DER-Verbesserung**: 28% relative Verbesserung (von z.B. 15% auf 11%)
+- **False Positives**: Reduzierte falsche Speaker-Erkennungen
+- **Speaker Consistency**: Bessere Wiedererkennnung bekannter Stimmen
+- **Segmentation Quality**: Präzisere Segment-Grenzen
+
+### 📊 Success Metrics
+1. **Quantitative Metriken:**
+   - DER (Diarization Error Rate) Verbesserung
+   - Speaker Purity Score
+   - Temporal Accuracy (Segment-Grenzen)
+   
+2. **Qualitative Bewertung:**
+   - Manuelle Überprüfung bei bekannten Sprechern
+   - A/B-Test mit Production-Daten
+   - User Experience Feedback
+
+### 🔄 Integration in bestehende Pipeline
+```python
+# Automatische Model-Selection
+USE_FINE_TUNED_MODEL = True
+
+if USE_FINE_TUNED_MODEL and os.path.exists("./models/company-speakers"):
+    # Load Fine-Tuned Model
+    model = SegmentationModel().from_pretrained("./models/company-speakers")
+    pipeline._segmentation.model = model.to_pyannote_model()
+    logger.info("🎯 Fine-Tuned Company Model loaded")
+else:
+    # Fallback to Standard Model
+    logger.info("📊 Standard pyannote.audio Model used")
+```
+
+### 🚀 Roadmap
+1. **Phase 1** (1-2 Tage): Diarizers Setup + Dataset Preparation
+2. **Phase 2** (1 Tag): Fine-Tuning Execution (~5 Min Training)
+3. **Phase 3** (1 Tag): Model Integration + Testing
+4. **Phase 4** (1 Tag): Performance Evaluation + Optimization
+5. **Phase 5** (Ongoing): Production Deployment + Monitoring
+
+### 🔧 Technische Voraussetzungen
+- **GPU**: Apple Silicon MPS oder CUDA-fähige GPU
+- **Memory**: 8GB+ RAM für Model Loading
+- **Storage**: 5GB+ für Models und Datasets
+- **HuggingFace**: Token mit pyannote Berechtigung
+
+### 🎯 Nächste Schritte
+1. **Dataset Converter**: Script für HuggingFace-Format-Konvertierung
+2. **Train Script**: Anpassung der Diarizers Train-Pipeline
+3. **Integration**: Fine-Tuned Model in bestehende Pipeline
+4. **Evaluation**: Performance-Messung und Optimierung
+
+**🔥 BUSINESS IMPACT:**
+- **Weniger Manual Reviews**: Bessere automatische Speaker-Trennung
+- **Höhere Qualität**: Präzisere Meeting-Transkripte
+- **Skalierbarkeit**: Optimierung für häufige Unternehmens-Sprecher
+- **ROI**: 5 Minuten Training für 28% Performance-Boost

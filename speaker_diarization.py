@@ -192,8 +192,9 @@ class SpeakerDiarizationProcessor:
         
         return output_folder
     
-    def process_audio_file(self, audio_file: Path) -> bool:
+    def process_audio_file(self, audio_file) -> bool:
         """Process single audio file with speaker diarization"""
+        audio_file = Path(audio_file)  # Ensure it's a Path object
         logger.info(f"🎵 Processing: {audio_file.name}")
         
         temp_audio_file = None
