@@ -39,6 +39,21 @@ Alle Änderungen folgen dem 3-Phasen-Protokoll:
 
 ### IN BEARBEITUNG
 
+- [BUGFIX] SPEAKER_03 → Elisabeth Assignment Korrektur (july.2.afternoon) ✅
+  - **Ziel/Problem**: Korrektur einer falschen Speaker-Zuordnung - SPEAKER_03 im july.2.afternoon recording ist tatsächlich "Elisabeth", nicht unzugeordnet
+  - **Hypothese/Plan**: Manuelle Korrektur der final_transcript.json, dann komplette Reorganisation der Speaker-Samples mit korrigierten Daten
+  - **Betroffene Dateien**: july.2.afternoon_final_transcript.json, komplette speakers/ Verzeichnis-Struktur
+  - **Erwartetes Ergebnis**: Korrekte Elisabeth-Zuordnung führt zu besseren Speaker-Statistiken und saubererem Fine-Tuning Dataset
+  - **Status**: ABGESCHLOSSEN
+  - **Durchgeführte Änderungen**: 
+    - ✅ july.2.afternoon_final_transcript.json: speaker_mappings "SPEAKER_03": "Elisabeth" korrigiert
+    - ✅ Alle transcript entries: "speaker": "SPEAKER_03" → "speaker": "Elisabeth" ersetzt
+    - ✅ speakers Array: "SPEAKER_03" Eintrag entfernt (da jetzt Elisabeth)
+    - ✅ Komplette speakers/ Reorganisation mit speaker_organizer.py
+    - ✅ Git commit & push der Korrekturen
+  - **Tatsächliches Ergebnis**: Elisabeth von 647→742 Segmente (+95), 17 statt 18 Sprecher (sauberer), 2.758 Segmente total
+  - **Erkenntnisse/Learnings**: Speaker-Assignment Fehler können massive Datensatz-Verbesserungen bewirken. Elisabeth ist jetzt klar die Hauptsprecherin mit 742 Segmenten. Manual Review der Auto-Assignments ist essentiell für Datenqualität!
+
 - [FINE-TUNING] Pyannote.audio Fine-Tuning für Unternehmens-Sprecher
   - **Ziel/Problem**: Verbesserung der Speaker Diarization Performance für wiederkehrende Unternehmens-Sprecher durch Fine-Tuning des pyannote.audio Segmentation Models
   - **Hypothese/Plan**:
