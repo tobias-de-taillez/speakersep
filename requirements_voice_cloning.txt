@@ -1,10 +1,14 @@
 # 🎤 Voice Cloning Requirements v2.0 - Python 3.12 Compatible
-# State-of-the-Art Models: Zonos-v0.1 + F5-TTS + XTTS-v2
+# State-of-the-Art Models: F5-TTS (Primary) + XTTS-v2 (Fallback) + Zonos-v0.1 (Experimental)
 
 # Core PyTorch with MPS support for M4 Pro
 torch>=2.0.0
 torchvision>=0.15.0
 torchaudio>=2.0.0
+
+# F5-TTS - Primary Model (Most Realistic)
+f5-tts>=1.1.0  # Official F5-TTS library
+f5-tts-mlx>=0.1.0  # MLX optimized for Apple Silicon (optional)
 
 # Transformers and HuggingFace
 transformers>=4.40.0

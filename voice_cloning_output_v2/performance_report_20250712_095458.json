@@ -1,0 +1,22 @@
+{
+  "session_id": "20250712_095458",
+  "models": [
+    "Zonos-v0.1"
+  ],
+  "synthesis_times": [
+    2.0026590824127197,
+    2.0010430812835693,
+    2.0009491443634033,
+    2.0010759830474854,
+    2.001235008239746
+  ],
+  "audio_lengths": [],
+  "quality_scores": [],
+  "statistics": {
+    "average_synthesis_time": 2.001392459869385,
+    "max_synthesis_time": 2.0026590824127197,
+    "min_synthesis_time": 2.0009491443634033,
+    "total_demos": 5,
+    "models_used": 1
+  }
+}
